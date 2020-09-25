@@ -3,7 +3,9 @@ library(stringi)
 
 player_name=function(pbp){
   for (i in 1:length(pbp$play_text)) {
+  
   string = pbp$play_text[i]  
+  
   if (grepl("NO PLAY", string, fixed = TRUE)){
     passer=NA
     receiver= NA
@@ -26,8 +28,10 @@ player_name=function(pbp){
     fg_made=NA
     fg_block=NA
   }
+  
   else{
     if (grepl(" pass complete to ", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " pass complete to ", string, fixed = TRUE)[[1]][1]
       end.1=stri_locate_all(pattern = " pass complete to ", string, fixed = TRUE)[[1]][2]
       
@@ -56,6 +60,7 @@ player_name=function(pbp){
     }
     
     else if (grepl(" Yd pass from ", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " Yd pass from ", string, fixed = TRUE)[[1]][1]
       end.1=stri_locate_all(pattern = " Yd pass from ", string, fixed = TRUE)[[1]][2]
       
@@ -83,6 +88,7 @@ player_name=function(pbp){
       fg_block=NA
     }
     else if (grepl("pass incomplete", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " pass incomplete", string, fixed = TRUE)[[1]][1]
       end.1=stri_locate_all(pattern = " pass incomplete", string, fixed = TRUE)[[1]][2]
       
@@ -117,6 +123,7 @@ player_name=function(pbp){
     }
     
     else if (grepl("run for", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " run for ", string, fixed = TRUE)[[1]][1]
       end.1=stri_locate_all(pattern = " run for ", string, fixed = TRUE)[[1]][2]
       
@@ -145,6 +152,7 @@ player_name=function(pbp){
     }
     
     else if (grepl(" Yd Run ", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " Yd Run ", string, fixed = TRUE)[[1]][1]
       end.1=stri_locate_all(pattern = " Yd Run ", string, fixed = TRUE)[[1]][2]
       
@@ -173,6 +181,7 @@ player_name=function(pbp){
     }
     
     else if (grepl("pass intercepted", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " pass intercepted", string, fixed = TRUE)[[1]][1]
       end.1=stri_locate_all(pattern = " pass intercepted ", string, fixed = TRUE)[[1]][2]
       
@@ -202,6 +211,7 @@ player_name=function(pbp){
     }
     
     else if (grepl("sacked by", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " sacked by ", string, fixed = TRUE)[[1]][1]
       end.1=stri_locate_all(pattern = " sacked by ", string, fixed = TRUE)[[1]][2]
       
@@ -233,161 +243,16 @@ player_name=function(pbp){
       fg_block=NA
       
     }
+    
     else if (grepl("punt", string, fixed = TRUE)){
-    if (grepl("touchback", string, fixed = TRUE)){
-      start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
-      end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
-      
-      start.2=stri_locate_all(pattern = " yds for a touchback", string, fixed = TRUE)[[1]][1]
-      
-      passer=NA
-      receiver=NA
-      rusher=NA
-      intercept_player=NA
-      sack_player=NA
-      sack_player1=NA
-      sack_player2=NA
-      punter=substr(string, 1, start.1-1)
-      punt_returner=NA
-      kickoff_player=NA
-      kickoff_returner=NA
-      fg_kicker=NA
-      completion=NA
-      interception_vec=NA
-      punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
-      return_yds=NA
-      touchback=1
-      fg_distance=NA
-      fg_made=NA
-      fg_block=NA
-    }
-    else if (grepl("downed", string, fixed = TRUE)){
+    
+      if (grepl("touchback", string, fixed = TRUE)){
+
         start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
         end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
-        
-        start.2=stri_locate_all(pattern = " yds, downed at the", string, fixed = TRUE)[[1]][1]
-        
-        passer=NA
-        receiver=NA
-        rusher=NA
-        intercept_player=NA
-        sack_player=NA
-        sack_player1=NA
-        sack_player2=NA
-        punter=substr(string, 1, start.1-1)
-        punt_returner=NA
-        kickoff_player=NA
-        kickoff_returner=NA
-        fg_kicker=NA
-        completion=NA
-        interception_vec=NA
-        punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
-        return_yds=NA
-        touchback=1
-        fg_distance=NA
-        fg_made=NA
-        fg_block=NA}
-      
-    else if (grepl("fair catch", string, fixed = TRUE)){
-      start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
-      end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
-      
-      start.2=stri_locate_all(pattern = " yds, fair catch by ", string, fixed = TRUE)[[1]][1]
-      end.2=stri_locate_all(pattern = " yds, fair catch by ", string, fixed = TRUE)[[1]][2]
-      
-      start.3=stri_locate_all(pattern = " at the ", string, fixed = TRUE)[[1]][1]
-      
-      
-      passer=NA
-      receiver=NA
-      rusher=NA
-      intercept_player=NA
-      sack_player=NA
-      sack_player1=NA
-      sack_player2=NA
-      punter=substr(string, 1, start.1-1)
-      punt_returner=substr(string, end.2+1, start.3-1)
-      kickoff_player=NA
-      kickoff_returner=NA
-      fg_kicker=NA
-      completion=NA
-      interception_vec=NA
-      punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
-      return_yds=NA 
-      touchback=0
-      fg_distance=NA
-      fg_made=NA
-      fg_block=NA
-    }
-    
-    else if (grepl(" returns ", string, fixed = TRUE)){
-      
-      start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
-      end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
-      
-      start.2=stri_locate_all(pattern = " yds , ", string, fixed = TRUE)[[1]][1]
-      end.2=stri_locate_all(pattern = " yds , ", string, fixed = TRUE)[[1]][2]
-      
-      start.3=stri_locate_all(pattern = " returns for ", string, fixed = TRUE)[[1]][1]
-      end.3=stri_locate_all(pattern = " returns for ", string, fixed = TRUE)[[1]][2]
-      
-      start.4=stri_locate_all(pattern = " yds to the ", string, fixed = TRUE)[[1]][1]
-      
-      passer=NA
-      receiver=NA
-      rusher=NA
-      intercept_player=NA
-      sack_player=NA
-      sack_player1=NA
-      sack_player2=NA
-      punter=substr(string, 1, start.1-1)
-      punt_returner=substr(string, end.2+1, start.3-1)
-      kickoff_player=NA
-      kickoff_returner=NA
-      fg_kicker=NA
-      completion=NA
-      interception_vec=NA
-      punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
-      return_yds=as.numeric(trimws(substr(string, end.3, start.4-1)))
-      touchback=0
-      fg_distance=NA
-      fg_made=NA
-      fg_block=NA
-    }  
-    
-    else if (grepl(" out-of-bounds ", string, fixed = TRUE)){
-      start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
-      end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
-      
-      start.2=stri_locate_all(pattern = " yds, punt out-of-bounds ", string, fixed = TRUE)[[1]][1]
-     
-      passer=NA
-      receiver=NA
-      rusher=NA
-      intercept_player=NA
-      sack_player=NA
-      sack_player1=NA
-      sack_player2=NA
-      punter=substr(string, 1, start.1-1)
-      punt_returner=NA
-      kickoff_player=NA
-      kickoff_returner=NA
-      fg_kicker=NA
-      completion=NA
-      interception_vec=NA
-      punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
-      return_yds=NA
-      touchback=0
-      fg_distance=NA
-      fg_made=NA
-      fg_block=NA
-    }
-      else {
-        start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
-        end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
-        
-        start.2=stri_locate_all(pattern = " yds", string, fixed = TRUE)[[1]][1]
-        
+
+        start.2=stri_locate_all(pattern = " yds for a touchback", string, fixed = TRUE)[[1]][1]
+
         passer=NA
         receiver=NA
         rusher=NA
@@ -408,9 +273,162 @@ player_name=function(pbp){
         fg_distance=NA
         fg_made=NA
         fg_block=NA
-      }}
+      }
+      else if (grepl("downed", string, fixed = TRUE)){
+          
+          start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
+          end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
+
+          start.2=stri_locate_all(pattern = " yds, downed at the", string, fixed = TRUE)[[1]][1]
+
+          passer=NA
+          receiver=NA
+          rusher=NA
+          intercept_player=NA
+          sack_player=NA
+          sack_player1=NA
+          sack_player2=NA
+          punter=substr(string, 1, start.1-1)
+          punt_returner=NA
+          kickoff_player=NA
+          kickoff_returner=NA
+          fg_kicker=NA
+          completion=NA
+          interception_vec=NA
+          punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
+          return_yds=NA
+          touchback=1
+          fg_distance=NA
+          fg_made=NA
+          fg_block=NA}
+
+      else if (grepl("fair catch", string, fixed = TRUE)){
+        
+        start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
+        end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
+
+        start.2=stri_locate_all(pattern = " yds, fair catch by ", string, fixed = TRUE)[[1]][1]
+        end.2=stri_locate_all(pattern = " yds, fair catch by ", string, fixed = TRUE)[[1]][2]
+
+        start.3=stri_locate_all(pattern = " at the ", string, fixed = TRUE)[[1]][1]
+
+
+        passer=NA
+        receiver=NA
+        rusher=NA
+        intercept_player=NA
+        sack_player=NA
+        sack_player1=NA
+        sack_player2=NA
+        punter=substr(string, 1, start.1-1)
+        punt_returner=substr(string, end.2+1, start.3-1)
+        kickoff_player=NA
+        kickoff_returner=NA
+        fg_kicker=NA
+        completion=NA
+        interception_vec=NA
+        punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
+        return_yds=NA 
+        touchback=0
+        fg_distance=NA
+        fg_made=NA
+        fg_block=NA
+      }
+
+      else if (grepl(" returns ", string, fixed = TRUE)){
+
+        start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
+        end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
+
+        start.2=stri_locate_all(pattern = " yds , ", string, fixed = TRUE)[[1]][1]
+        end.2=stri_locate_all(pattern = " yds , ", string, fixed = TRUE)[[1]][2]
+
+        start.3=stri_locate_all(pattern = " returns for ", string, fixed = TRUE)[[1]][1]
+        end.3=stri_locate_all(pattern = " returns for ", string, fixed = TRUE)[[1]][2]
+
+        start.4=stri_locate_all(pattern = " yds to the ", string, fixed = TRUE)[[1]][1]
+
+        passer=NA
+        receiver=NA
+        rusher=NA
+        intercept_player=NA
+        sack_player=NA
+        sack_player1=NA
+        sack_player2=NA
+        punter=substr(string, 1, start.1-1)
+        punt_returner=substr(string, end.2+1, start.3-1)
+        kickoff_player=NA
+        kickoff_returner=NA
+        fg_kicker=NA
+        completion=NA
+        interception_vec=NA
+        punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
+        return_yds=as.numeric(trimws(substr(string, end.3, start.4-1)))
+        touchback=0
+        fg_distance=NA
+        fg_made=NA
+        fg_block=NA
+      }  
+
+      else if (grepl(" out-of-bounds ", string, fixed = TRUE)){
+        
+        start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
+        end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
+
+        start.2=stri_locate_all(pattern = " yds, punt out-of-bounds ", string, fixed = TRUE)[[1]][1]
+
+        passer=NA
+        receiver=NA
+        rusher=NA
+        intercept_player=NA
+        sack_player=NA
+        sack_player1=NA
+        sack_player2=NA
+        punter=substr(string, 1, start.1-1)
+        punt_returner=NA
+        kickoff_player=NA
+        kickoff_returner=NA
+        fg_kicker=NA
+        completion=NA
+        interception_vec=NA
+        punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
+        return_yds=NA
+        touchback=0
+        fg_distance=NA
+        fg_made=NA
+        fg_block=NA
+      }
+        else {
+          
+          start.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][1]
+          end.1=stri_locate_all(pattern = " punt for ", string, fixed = TRUE)[[1]][2]
+
+          start.2=stri_locate_all(pattern = " yds", string, fixed = TRUE)[[1]][1]
+
+          passer=NA
+          receiver=NA
+          rusher=NA
+          intercept_player=NA
+          sack_player=NA
+          sack_player1=NA
+          sack_player2=NA
+          punter=substr(string, 1, start.1-1)
+          punt_returner=NA
+          kickoff_player=NA
+          kickoff_returner=NA
+          fg_kicker=NA
+          completion=NA
+          interception_vec=NA
+          punt_yds=as.numeric(substr(string, end.1+1, start.2-1))
+          return_yds=NA
+          touchback=1
+          fg_distance=NA
+          fg_made=NA
+          fg_block=NA
+        }}
     
     else if (grepl("kickoff", string, fixed = TRUE)){
+      
       if (grepl("return", string, fixed = TRUE)){
         
         start.1=stri_locate_all(pattern = " kickoff for ", string, fixed = TRUE)[[1]][1]
@@ -445,7 +463,9 @@ player_name=function(pbp){
         fg_made=NA
         fg_block=NA
       }
+      
       else if(grepl("touchback", string, fixed = TRUE)){
+        
         start.1=stri_locate_all(pattern = " kickoff for ", string, fixed = TRUE)[[1]][1]
         
         passer=NA
@@ -470,6 +490,7 @@ player_name=function(pbp){
         fg_block=NA
       }
       else {
+        
         start.1=stri_locate_all(pattern = " kickoff for ", string, fixed = TRUE)[[1]][1]
         
         passer=NA
@@ -496,7 +517,9 @@ player_name=function(pbp){
     
     
   else if (grepl("FG", string, fixed = TRUE)){
+    
     if (grepl("GOOD", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " yd FG ", string, fixed = TRUE)[[1]][1]
       
       passer=NA
@@ -524,7 +547,9 @@ player_name=function(pbp){
       fg_made=1
       fg_block=0
     }
+    
     if (grepl("MISSED", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " yd FG ", string, fixed = TRUE)[[1]][1]
       
       passer=NA
@@ -554,6 +579,7 @@ player_name=function(pbp){
     }
     
     if (grepl("BLOCKED", string, fixed = TRUE)){
+      
       start.1=stri_locate_all(pattern = " yd FG ", string, fixed = TRUE)[[1]][1]
       
       passer=NA
@@ -578,7 +604,9 @@ player_name=function(pbp){
       fg_made=0
       fg_block=1
     }
+    
     else {
+      
       start.1=stri_locate_all(pattern = " yd FG ", string, fixed = TRUE)[[1]][1]
       
       passer=NA
@@ -606,6 +634,7 @@ player_name=function(pbp){
       fg_made=NA
       fg_block=0
     }}
+    
     else {
       passer=NA
       receiver=NA
@@ -629,6 +658,7 @@ player_name=function(pbp){
       fg_made=NA
       fg_block=NA
     }}
+    
   result=data.frame(passer,
                     receiver,
                     rusher,
@@ -649,6 +679,7 @@ player_name=function(pbp){
                     fg_distance,
                     fg_made,
                     fg_block)
+  
   names(result)=c("passer",
                   "receiver",
                   "rusher",
