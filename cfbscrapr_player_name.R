@@ -2,6 +2,27 @@ library(stringi)
 
 
 player_name=function(pbp){
+  result_df=data.frame(passer=character(),
+                              receiver=character(),
+                              rusher=character(),
+                              intercept_player=character(),
+                              sack_player=character(),
+                              sack_player1=character(),
+                              sack_player2=character(),
+                              punter=character(),
+                              punt_returner=character(),
+                              kickoff_player=character(),
+                              kickoff_returner=character(),
+                              fg_kicker=character(),
+                              completion=numeric(),
+                              interception_vec=numeric(),
+                              punt_yds=numeric(),
+                              return_yds=numeric(),
+                              touchback=numeric(),
+                              fg_distance=numeric(),
+                              fg_made=numeric(),
+                              fg_block=numeric())
+                              
   for (i in 1:length(pbp$play_text)) {
   
   string = pbp$play_text[i]  
