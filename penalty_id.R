@@ -1,5 +1,6 @@
 library(stringi)
 
+# testing with some pbp
 test=pbp_2019
 start.time <- Sys.time()
 test=penalty_id(test)
@@ -17,13 +18,6 @@ test$play_text[test$penalty==1][is.na(test$penalty_yds[test$penalty==1])]
 # if yards_gained was equal to 0, 5, 10, or 15, I automatically set the penalty yardage to that number
 test$yards_gained[test$penalty==1][is.na(test$penalty_yds[test$penalty==1])]
 
-compareNA <- function(v1,v2) {
-  # This function returns TRUE wherever elements are the same, including NA's,
-  # and false everywhere else.
-  same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
-  same[is.na(same)] <- FALSE
-  return(same)
-}
 
 # play text of "Missing" plays
 test$play_text[which(test$penalty_name=="Missing", TRUE)]
