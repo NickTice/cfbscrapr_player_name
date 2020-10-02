@@ -1,5 +1,8 @@
 library(stringi)
 
+# Takes a pretty long time to run so I would probably do it on smaller sets of pbp
+# It took me about 1 min on 10k plays but 30-40 mins on 100k plays so its quicker if you do it on smaller sets and use rbind to combine them
+
 player_name=function(pbp){
   
   result_df=data.frame(passer=character(),
