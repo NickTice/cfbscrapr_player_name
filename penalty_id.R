@@ -3,36 +3,19 @@ library(stringi)
 # testing with some pbp
 test=pbp_2019
 start.time <- Sys.time()
-test=penalty_id(test)
+test=cbind(test, play_text%>%
+  map_df(penalty_id))
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 time.taken
 
+# if you have pbp, use the following after you run the function
+play_text=pbp$play_text
+pbp=cbind(pbp, play_text%>%
+  map_df(penalty_id))
 
 
-
-# play text of plays with NA for penalty yardage
-test$play_text[test$penalty==1][is.na(test$penalty_yds[test$penalty==1])]
-
-# same thing returning yards gained for NA penalty_yds
-# if yards_gained was equal to 0, 5, 10, or 15, I automatically set the penalty yardage to that number
-test$yards_gained[test$penalty==1][is.na(test$penalty_yds[test$penalty==1])]
-
-
-# play text of "Missing" plays
-test$play_text[which(test$penalty_name=="Missing", TRUE)]
-
-
-penalty_id=function(pbp){
-  
-  result_df=data.frame(penalty=numeric(),
-                       penalty_name=character(),
-                       penalty_yds=numeric()
-  )
-  
-  for (i in 1:length(pbp$play_text)) {
-    
-    string = pbp$play_text[i]  
+penalty_id=function(string){
     
     if (grepl("PENALTY", string, fixed = TRUE) | grepl("Penalty", string, fixed = TRUE)){
       
@@ -40,14 +23,14 @@ penalty_id=function(pbp){
         penalty=1
         penalty_name="Off-Setting"
         penalty_yds=0
-        }
+      }
       
       else if (grepl("declined", string, fixed = TRUE)){
         penalty=1
         penalty_name="Declined Penalty"
         penalty_yds=0
       }
-        
+      
       else {
         if (grepl(" roughing passer ", string, fixed = TRUE) | grepl(" Roughing Passer ", string, fixed = TRUE)){
           
@@ -511,7 +494,7 @@ penalty_id=function(pbp){
           penalty_name="Illegal Touching"
           penalty_yds=as.numeric(trimws(chartr(old = "(", new = " ", substr(string, start.1-2, start.1))))
         }
-      
+        
         else if (grepl(" clipping ", string, fixed = TRUE)){
           
           if (nrow(stri_locate_all(pattern = " yards to the ", string, fixed = TRUE)[[1]])==2){
@@ -531,7 +514,7 @@ penalty_id=function(pbp){
           penalty_name="Clipping"
           penalty_yds=as.numeric(trimws(chartr(old = "(", new = " ", substr(string, start.1-2, start.1))))
         }
-      
+        
         else if (grepl(" Sideline Infraction ", string, fixed = TRUE)){
           
           if (nrow(stri_locate_all(pattern = " yards to the ", string, fixed = TRUE)[[1]])==2){
@@ -654,7 +637,7 @@ penalty_id=function(pbp){
           penalty_yds=as.numeric(trimws(chartr(old = "(", new = " ", substr(string, start.1-2, start.1))))
         }
         
-
+        
         
         else if (grepl(" Horse Collar Tackle ", string, fixed = TRUE) | grepl(" horse collar tackle ", string, fixed = TRUE)){
           
@@ -676,7 +659,7 @@ penalty_id=function(pbp){
           penalty_yds=as.numeric(trimws(chartr(old = "(", new = " ", substr(string, start.1-2, start.1))))
         }
         
-          
+        
         else if (grepl(" illegal participation ", string, fixed = TRUE) | grepl(" Illegal Participation ", string, fixed = TRUE)){
           
           if (nrow(stri_locate_all(pattern = " yards to the ", string, fixed = TRUE)[[1]])==2){
@@ -839,7 +822,7 @@ penalty_id=function(pbp){
           penalty_name="Delay of Game"
           penalty_yds=as.numeric(trimws(chartr(old = "(", new = " ", substr(string, start.1-2, start.1))))
         }
-    
+        
         else if (grepl(" Targeting ", string, fixed = TRUE) | grepl(" targeting ", string, fixed = TRUE)){
           
           if (nrow(stri_locate_all(pattern = " yards to the ", string, fixed = TRUE)[[1]])==2){
@@ -1100,7 +1083,8 @@ penalty_id=function(pbp){
           penalty_yds=as.numeric(trimws(chartr(old = "(", new = " ", substr(string, start.1-2, start.1))))
         }
       }
-      }
+      
+    }
     
     
     else{
@@ -1108,7 +1092,7 @@ penalty_id=function(pbp){
       penalty_name=NA
       penalty_yds=NA
     }
-  
+    
     if (is.na(penalty_yds)){
       if (any(abs(pbp$yards_gained[i])==c(0,5,10,15))){
         penalty_yds=abs(pbp$yards_gained[i])}
@@ -1117,19 +1101,24 @@ penalty_id=function(pbp){
     result=data.frame(penalty,
                       penalty_name,
                       abs(penalty_yds)
-                      )
+    )
     
     names(result)=c("penalty",
                     "penalty_name",
                     "penalty_yds"
-                    )
-  
-    
-    result_df=rbind(result_df, result)
-  }
-  
-
-  pbp=cbind(pbp, result_df)
-  return(pbp)
+    )
+   
+  return(result)
 }
+
+# play text of plays with NA for penalty yardage
+test$play_text[test$penalty==1][is.na(test$penalty_yds[test$penalty==1])]
+
+# same thing returning yards gained for NA penalty_yds
+# if yards_gained was equal to 0, 5, 10, or 15, I automatically set the penalty yardage to that number
+test$yards_gained[test$penalty==1][is.na(test$penalty_yds[test$penalty==1])]
+
+
+# play text of "Missing" plays
+test$play_text[which(test$penalty_name=="Missing", TRUE)]
 
