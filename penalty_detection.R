@@ -102,6 +102,7 @@ penalty_detection <- function(raw_df) {
         stringr::str_detect(.data$play_text, regex(" substitution infraction ", ignore_case = TRUE)) ~ "Substitution Infraction",
         stringr::str_detect(.data$play_text, regex(" illegal formation ", ignore_case = TRUE)) ~ "Illegal Formation",
         stringr::str_detect(.data$play_text, regex(" illegal touching ", ignore_case = TRUE)) ~ "Illegal Touching",
+        stringr::str_detect(.data$play_text, regex(" sideline interference ", ignore_case = TRUE)) ~ "Sideline Interference",
         stringr::str_detect(.data$play_text, regex(" clipping ", ignore_case = TRUE)) ~ "Clipping",
         stringr::str_detect(.data$play_text, regex(" sideline infraction ", ignore_case = TRUE)) ~ "Sideline Infraction",
         stringr::str_detect(.data$play_text, regex(" crackback ", ignore_case = TRUE)) ~ "Crackback",
