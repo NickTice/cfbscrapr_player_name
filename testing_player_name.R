@@ -1,140 +1,112 @@
 library(stringi)
 
-
-
-pbp_cfb <- data.frame()
-for(i in 1:4){
-  pbp <- cfb_pbp_data(year=2020, season_type = 'regular', week = i, epa_wpa = TRUE)
-  pbp_2020 <- rbind(pbp_2020, pbp)
+# test pbp
+pbp_2019 <- data.frame()
+for(i in 1:12){
+  pbp <- cfb_pbp_data(year=2019, season_type = 'regular', week = i, epa_wpa = TRUE)
+  pbp_2019 <- rbind(pbp_2019, pbp)
 }
 
-
-compareNA <- function(v1,v2) {
-  # This function returns TRUE wherever elements are the same, including NA's,
-  # and false everywhere else.
-  same <- (v1 == v2)  |  (is.na(v1) & is.na(v2))
-  same[is.na(same)] <- FALSE
-  return(same)
-}
-
-
-pbp_S=pbp_cfb
-pbp_N=pbp_cfb
-
-
+# yours. takes about 2.5 minutes
 start.time <- Sys.time()
-pbp_S=add_player_cols(pbp_S)
+test=pbp_2019
+test=add_player_cols(test)
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
+
+# mine. takes about 6 mins to run
+start.time <- Sys.time()
+test2=pbp_2019
+test2=cbind(test2, play_text%>%
+                   map_df(player_name))
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 time.taken
 
 
-start.time <- Sys.time()
-pbp_N=player_name(pbp_N)
-end.time <- Sys.time()
-time.taken <- end.time - start.time
-time.taken
 
 
-# Testing different matches. Returns index that can be checked by setting equal to x
+# each of these indexes where ours disagree and return what each of ours say with the play text.
 
-# your code sometimes doesn't record a passer on sacks
-matches=which(!(compareNA(trimws(pbp_S$passer_player_name),pbp_N$passer)))
-matches
+# a few plays here that are a little weird. A few of mine kept the comma. Two of yours were weird but i think it's the play text
+idx=which(test$passer_player_name!=test2$passer)
+yours=test[idx,]$passer_player_name
+mine=test2[idx,]$passer
+text=test[idx,]$play_text
 
-x= 
-pbp_S$play_text[x]
-pbp_S$passer_player_name[x]
-pbp_N$passer[x]
+diff=cbind(yours,mine, text)
+diff
 
-#############################################################################
+# Just a few off here too. 
+idx=which(test$rusher_player_name!=test2$rusher)
+yours=test[idx,]$rusher_player_name
+mine=test2[idx,]$rusher
+text=test[idx,]$play_text
 
-# mine gets two wrong
-matches=which(!(compareNA(trimws(pbp_S$rusher_player_name),pbp_N$rusher)))
-matches
+diff=cbind(yours, mine, text)
+diff
 
-x= 
-pbp_S$play_text[x]
-pbp_S$rusher_player_name[x]
-pbp_N$rusher[x]
+# some weird stuff going on here
+idx=which(test$receiver_player_name!=test2$receiver)
+yours=test[idx,]$receiver_player_name
+mine=test2[idx,]$receiver
+text=test[idx,]$play_text
 
-#############################################################################
+diff=cbind(yours, mine, text)
+diff
 
+# mine is very wrong for every pick six but yours looks good for this
+idx=which(test$interception_player_name!=test2$intercept_player)
+yours=test[idx,]$interception_player_name
+mine=test2[idx,]$intercept_player
+text=test[idx,]$play_text
 
-# Yours has some weird strings for interceptions 
-pbp_S$receiver_player_name[which(pbp_S$receiver_player_name=="")]=NA
-matches=which(!(compareNA(trimws(pbp_S$receiver_player_name),pbp_N$receiver)))
-matches
+diff=cbind(yours, mine, text)
+diff
 
-x= 
-pbp_S$play_text[x]
-pbp_S$receiver_player_name[x]
-pbp_N$receiver[x]
+# no issues
+idx=which(test$punter_player_name!=test2$punter)
+yours=test[idx,]$punter_player_name
+mine=test2[idx,]$punter
+text=test[idx,]$play_text
 
-#############################################################################
+diff=cbind(yours, mine, text)
+diff
 
+# yours has "at" at the end of a few
+idx=which(test$punt_returner_player_name!=test2$punt_returner)
+yours=test[idx,]$punt_returner_player_name
+mine=test2[idx,]$punt_returner
+text=test[idx,]$play_text
 
-# your interception player seems off
-matches=which(!(compareNA(trimws(pbp_S$interception_player_name), pbp_N$intercept_player)))
-matches
+diff=cbind(yours, mine, text)
+diff
 
-x= 7326
-pbp_S$play_text[x]
-pbp_S$interception_player_name[x]
-pbp_N$intercept_player[x]
+# no issues
+idx=which(test$kickoff_player_name!=test2$kickoff_player)
+yours=test[idx,]$kickoff_player_name
+mine=test2[idx,]$kickoff_player
+text=test[idx,]$play_text
 
-#############################################################################
+diff=cbind(yours, mine, text)
+diff
 
-# both of ours miss a few
-matches=which(!(compareNA(trimws(pbp_S$punter_player_name), pbp_N$punter)))
-matches
+# no issues
+idx=which(test$kickoff_returner_player_name!=test2$kickoff_returner)
+yours=test[idx,]$kickoff_returner_player_name
+mine=test2[idx,]$kickoff_returner
+text=test[idx,]$play_text
 
-x= 
-pbp_S$play_text[x]
-pbp_S$punter_player_name[x]
-pbp_N$punter[x]
+diff=cbind(yours, mine, text)
+diff
 
-############################################################################
+# yours only seems to do the last name
+idx=which(test$fg_kicker_player_name!=test2$fg_kicker)
+yours=test[idx,]$fg_kicker_player_name
+mine=test2[idx,]$fg_kicker
+text=test[idx,]$play_text
 
-# your punt returner seems really off
-matches=which(!(compareNA(trimws(pbp_S$punt_returner_player_name), pbp_N$punt_returner)))
-matches
-
-x= 
-pbp_S$play_text[x]
-pbp_S$punt_returner_player_name[x]
-pbp_N$punt_returner[x]
-
-############################################################################
-
-# mine misses one
-matches=which(!(compareNA(trimws(pbp_S$kickoff_player_name), pbp_N$kickoff_player)))
-matches
-
-x= 
-pbp_S$play_text[x]
-pbp_S$kickoff_player_name[x]
-pbp_N$kickoff_player[x]
-
-############################################################################
-
-# mine misses some onside kicks
-matches=which(!(compareNA(trimws(pbp_S$kickoff_returner_player_name), pbp_N$kickoff_returner)))
-matches
-
-x= 
-pbp_S$play_text[x]
-pbp_S$kickoff_returner_player_name[x]
-pbp_N$kickoff_returner[x]
-
-############################################################################
-
-# another one that seems off
-matches=which(!(compareNA(trimws(pbp_S$fg_kicker_player_name), pbp_N$fg_kicker)))
-matches
-
-x= 
-pbp_S$play_text[x]
-pbp_S$fg_kicker_player_name[x]
-pbp_N$fg_kicker[x]
+diff=cbind(yours, mine, text)
+diff
 
