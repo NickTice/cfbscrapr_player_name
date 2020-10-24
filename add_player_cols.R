@@ -1,45 +1,51 @@
-#' Add Player Columns 
-#' Extracts player names from play text
-#'
-#' @param pbp (\emph{String} required): Team, select a valid team in D-I football
+#' Add player columns extracted from play text
 #' 
-#' @return A data frame with 11 variables:
-#' \describe{
-#'   \item{\code{rusher_player_name}}{character.}
-#'   \item{\code{receiver_player_name}}{character.}
-#'   \item{\code{passer_player_name}}{character.}
-#'   \item{\code{sack_player_name}}{integer.}
-#'   \item{\code{sack_player_name2}}{integer.}
-#'   \item{\code{interception_player_name}}{integer.}
-#'   \item{\code{punter_player_name}}{integer.}
-#'   \item{\code{fg_kicker_player_name}}{character.}
-#'   \item{\code{kickoff_player_name}}{character.}
-#'   \item{\code{kickoff_returner_player_name}}{character.}
-#'   \item{\code{punt_returner_player_name}}{character.}
+#' @param play_df (\emph{data.frame} required) Extracts player name information from Play-by-Play data frame, as pulled from `cfb_pbp_data()`
+#' @details Cleans CFB (D-I) player Data to create player name columns. Requires the following columns be present:
+#' \itemize{
+#' \item{rush}{.}
+#' \item{pass}{.}
+#' \item{play_text}{}
+#' \item{play_type}{.}
+#' \item{sack}{.}
+#' \item{fumble_vec}{.}
 #' }
-#' 
-#' @keywords Team Roster
-#' @importFrom jsonlite "fromJSON"
-#' @importFrom httr "GET"
-#' @importFrom utils "URLencode"
-#' @importFrom assertthat "assert_that"
-#' @importFrom glue "glue"
-#' @import dplyr
-#' @import stringr
-#' @import tidyr
+#' @return The original `pbp` with the following columns appended to it:
+#' \describe{
+#' \item{rusher_player_name}{.}
+#' \item{receiver_player_name}{.}
+#' \item{passer_player_name}{.}
+#' \item{sack_player_name}{.}
+#' \item{sack_player_name2}{.}
+#' \item{pass_breakup_player_name}{.}
+#' \item{interception_player_name}{.}
+#' \item{fg_kicker_player_name}{.}
+#' \item{fg_block_player_name}{.}
+#' \item{fg_return_player_name}{.}
+#' \item{kickoff_player_name}{.}
+#' \item{kickoff_returner_player_name}{.}
+#' \item{punter_player_name}{.}
+#' \item{punt_block_player_name}{.}
+#' \item{punt_returner_player_name}{.}
+#' \item{punt_block_return_player_name}{.}
+#' \item{fumble_player_name}{.}
+#' \item{fumble_forced_player_name}{.}
+#' \item{fumble_recovered_player_name}{.}
+#' }
+#' @keywords internal
+#' @importFrom rlang ".data"
+#' @importFrom stringi "stri_extract_first_regex"
+#' @importFrom stringr "str_detect" "str_extract" "str_remove"
+#' @importFrom dplyr "mutate" "arrange" "case_when"
 #' @export
-#' @examples
-#' pbp <- cfb_pbp_data(year = 2020, week = 3, team = 'Miami', epa_wpa = TRUE)
-#' add_player_cols(pbp)
 #'
-
 add_player_cols <- function(pbp) {
   ## Extract player names
   # RB names 
   pbp <- pbp %>%
     mutate(
       rush_player = ifelse(.data$rush == 1, 
-                           str_extract(.data$play_text, "(.{0,25} )run |(.{0,25} )\\d{0,2} Yd Run"), NA),
+                           str_extract(.data$play_text, "(.{0,25} )run |(.{0,25} )\\d{0,2} Yd Run"), NA_character_),
       rush_player = str_remove(.data$rush_player, " run | \\d+ Yd Run"))
   # QB names 
   pbp <- pbp %>%
@@ -47,7 +53,7 @@ add_player_cols <- function(pbp) {
       pass_player = 
         ifelse(.data$pass == 1 & .data$play_type != "Passing Touchdown", 
                str_extract(.data$play_text, 
-                           "pass from (.*?) \\(|(.{0,30} )pass |(.+) sacked by|(.+) sacked for|(.{0,30} )incomplete "), NA),
+                           "pass from (.*?) \\(|(.{0,30} )pass |(.+) sacked by|(.+) sacked for|(.{0,30} )incomplete "), NA_character_),
       pass_player = str_remove(.data$pass_player, "pass | sacked by| sacked for| incomplete"),
       pass_player = if_else(.data$play_type == "Passing Touchdown", 
                             str_extract(.data$play_text, "pass from(.+)"), .data$pass_player),
@@ -65,7 +71,7 @@ add_player_cols <- function(pbp) {
   ## Receiver names
   pbp <- pbp %>%
     mutate(
-      receiver_player = ifelse(.data$pass == 1, str_extract(.data$play_text, "to (.+)"), NA),
+      receiver_player = ifelse(.data$pass == 1 & !stringr::str_detect(.data$play_text, "sacked"), str_extract(.data$play_text, "to (.+)"), NA_character_),
       receiver_player = if_else(str_detect(.data$play_text, regex("Yd pass", ignore_case = TRUE)),
                                 str_extract(.data$play_text, "(.{0,25} )\\d{0,2} Yd pass"),
                                 .data$receiver_player),
@@ -76,8 +82,8 @@ add_player_cols <- function(pbp) {
                                  .data$play_type == "Interception Return" |
                                  .data$play_type == "Interception Return Touchdown" |
                                  (.data$play_type %in% c("Fumble Recovery (Opponent)",
-                                                   "Fumble Recovery (Opponent) Touchdown") &
-                                    str_detect(.data$play_text, "sacked")), NA, .data$receiver_player),
+                                                         "Fumble Recovery (Opponent) Touchdown") &
+                                    str_detect(.data$play_text, "sacked")), NA_character_, .data$receiver_player),
       receiver_player = str_remove(.data$receiver_player, "to "),
       receiver_player = str_remove(.data$receiver_player, "\\,.+"),
       receiver_player = str_remove(.data$receiver_player, "for (.+)"),
@@ -100,7 +106,7 @@ add_player_cols <- function(pbp) {
       receiver_player = str_remove(.data$receiver_player, " FL"),
       receiver_player = str_remove(.data$receiver_player, " OH"),
       receiver_player = str_remove(.data$receiver_player, " NC"),
-      receiver_player = str_remove(.data$receiver_player, " É"),
+      receiver_player = str_remove(.data$receiver_player, " \\u00c9"),
       receiver_player = str_remove(.data$receiver_player, " fumbled,"),
       receiver_player = str_remove(.data$receiver_player, "the (.+)"),
       receiver_player = str_remove(.data$receiver_player, "pass incomplete to"),
@@ -112,84 +118,244 @@ add_player_cols <- function(pbp) {
   ## Sack player names
   pbp <- pbp %>%
     mutate(
-      sack_players = ifelse(.data$pass == 1 & .data$play_type == "Sack", 
-                            str_extract(.data$play_text, "sacked by(.+)"), NA),
+      sack_players = ifelse(.data$pass == 1 & (.data$sack == 1|.data$fumble_vec == 1), 
+                            str_extract(.data$play_text, "sacked by(.+)"), NA_character_),
       sack_players = str_remove(.data$sack_players, "for (.+)"),
-      sack_players = str_remove(.data$sack_players, "(.+)by"),
+      sack_players = str_remove(.data$sack_players, "(.+) by "),
       sack_player1 = str_remove(.data$sack_players, "and (.+)"),
       sack_player2 = if_else(str_detect(.data$sack_players, "and (.+)"), 
-                             str_remove(.data$sack_players, " (.+) and"), NULL)) 
-  ## Interception player names
+                             str_remove(.data$sack_players, "(.+) and"), NA_character_)) 
+  ## Interception player name
   pbp <- pbp %>%
     mutate(
       interception_player = ifelse(.data$pass == 1 & (.data$play_type == "Interception Return"| 
                                                         .data$play_type == "Interception Return Touchdown"),
-                                   str_extract(.data$play_text, "intercepted (.+)"), NA),
-      interception_player = if_else(str_detect(.data$play_text, regex("Yd pass", ignore_case = TRUE)),
-                                    str_extract(.data$play_text, "(.{0,25} )\\d{0,2} Yd pass"),
-                                    .data$interception_player),
+                                   str_extract(.data$play_text, "intercepted (.+)"), NA_character_),
       interception_player = if_else(str_detect(.data$play_text, regex("Yd Interception Return", ignore_case = TRUE)),
-                                    str_extract(.data$play_text, "(.{0,25} )\\d{0,2} Yd Interception Return"),
+                                    str_extract(.data$play_text, "(.{0,25} )\\d{0,2} Yd Interception Return|(.{0,25} )\\d{0,2} yd interception return"),
                                     .data$interception_player),
       interception_player = str_remove(.data$interception_player, "return (.+)"),
       interception_player = str_remove(.data$interception_player, "(.+) intercepted "),
       interception_player = str_remove(.data$interception_player, "intercepted"),
       interception_player = str_remove(.data$interception_player, " Yd Interception Return"),
-      interception_player = str_remove(.data$interception_player, " (\\d{1,2})"))
+      interception_player = str_remove(.data$interception_player, regex("for a 1st down", ignore_case = TRUE)),
+      interception_player = str_remove(.data$interception_player, " (\\d{1,2})"),
+      interception_player = str_remove(.data$interception_player, "for a TD "))
   
-  ## Punter Name
+  ## Pass Breakup player name
+  pbp <- pbp %>%
+    mutate(
+      pass_breakup_player = ifelse(.data$pass == 1,
+                                   str_extract(.data$play_text, "broken up by (.+)"), NA_character_),
+      pass_breakup_player = str_remove(.data$pass_breakup_player, "(.+) broken up by"),
+      pass_breakup_player = str_remove(.data$pass_breakup_player, "broken up by"),
+      pass_breakup_player = str_remove(.data$pass_breakup_player, "Penalty(.+)"),
+      pass_breakup_player = str_remove(.data$pass_breakup_player, "SOUTH FLORIDA"),
+      pass_breakup_player = str_remove(.data$pass_breakup_player, "WEST VIRGINIA"),
+      pass_breakup_player = str_remove(.data$pass_breakup_player, "MISSISSIPPI ST"),
+      pass_breakup_player = str_remove(.data$pass_breakup_player, "CAMPBELL"),
+      pass_breakup_player = str_remove(.data$pass_breakup_player, "COASTL CAROLINA")
+    )
+  
+  ## Punter player name
   pbp <- pbp %>%
     mutate(
       punter_player = ifelse(str_detect(.data$play_type, "Punt"),
-                             str_extract(.data$play_text, ".{0,25} punt"), NA),
-      punter_player = str_remove(.data$punter_player," punt"))
+                             str_extract(.data$play_text, ".{0,25} punt"), NA_character_),
+      punter_player = str_remove(.data$punter_player," punt"),
+      punter_player = str_remove(.data$punter_player," for(.+)"))
   
-  ## Punt Returner
+  ## Punt Returner player name
   pbp <- pbp %>%
     mutate(
       punt_returner_player = ifelse(str_detect(.data$play_type, "Punt"), 
-                                    str_extract(.data$play_text, ", .{0,25} returns"), NA),
+                                    str_extract(.data$play_text, ", .{0,25} returns|fair catch by .{0,25}"), NA_character_),
       punt_returner_player = str_remove(.data$punt_returner_player, ", "),
-      punt_returner_player = str_remove(.data$punt_returner_player, " returns")) 
+      punt_returner_player = str_remove(.data$punt_returner_player, " returns"),
+      punt_returner_player = str_remove(.data$punt_returner_player, "fair catch by"),
+      punt_returner_player = str_remove(.data$punt_returner_player, " at (.+)")) 
   
-  ## Kickoff Specialist Name
+  ## Punt Block player name
+  pbp <- pbp %>%
+    mutate(
+      punt_block_player = ifelse(str_detect(.data$play_type, "Punt"), 
+                                 str_extract(.data$play_text, "punt blocked by .{0,25}| blocked by(.+)"), NA_character_),
+      punt_block_player = str_remove(.data$punt_block_player, "punt blocked by |for a(.+)"),
+      punt_block_player = str_remove(.data$punt_block_player, "blocked by(.+)"),
+      punt_block_player = str_remove(.data$punt_block_player, "blocked(.+)"),
+      punt_block_player = str_remove(.data$punt_block_player, " for(.+)"),
+      punt_block_player = str_remove(.data$punt_block_player, ",(.+)"),
+      punt_block_player = ifelse(str_detect(.data$play_text, regex("yd return of blocked punt", ignore_case = TRUE)),
+                                 str_extract(.data$play_text,regex("(.+) yd return of blocked", ignore_case = TRUE)),
+                                 .data$punt_block_player),
+      punt_block_player = str_remove(.data$punt_block_player, "blocked|Blocked"),
+      punt_block_player = str_remove(.data$punt_block_player, "\\d+"),
+      punt_block_player = str_remove(.data$punt_block_player, regex("yd return of", ignore_case = TRUE))
+    ) 
+  
+  ## Punt Block return player name
+  pbp <- pbp %>%
+    mutate(
+      punt_block_return_player = ifelse(str_detect(.data$play_type, "Punt") & str_detect(.data$play_text, "blocked") & 
+                                          str_detect(.data$play_text, "return"), 
+                                        str_extract(.data$play_text, "(.+) return"), NA_character_),
+      punt_block_return_player = str_remove(.data$punt_block_return_player, glue::glue("(.+)blocked by {punt_block_player}")),
+      punt_block_return_player = str_remove(.data$punt_block_return_player, glue::glue("blocked by {punt_block_player}")),
+      punt_block_return_player = str_remove(.data$punt_block_return_player, "return(.+)"),
+      punt_block_return_player = str_remove(.data$punt_block_return_player, "return"),
+      punt_block_return_player = str_remove(.data$punt_block_return_player, "(.+)blocked by"),
+      punt_block_return_player = str_remove(.data$punt_block_return_player, "for a TD(.+)|for a SAFETY(.+)"),
+      punt_block_return_player = str_remove(.data$punt_block_return_player, "blocked by"),
+      punt_block_return_player = str_remove(.data$punt_block_return_player, ", ")) 
+  
+  ## Kickoff Specialist player name
   pbp <- pbp %>%
     mutate(
       kickoff_player = ifelse(str_detect(.data$play_type, "Kickoff"),
-                              str_extract(.data$play_text, ".{0,25} kickoff"), NA),
-      kickoff_player = str_remove(.data$kickoff_player," kickoff"))
+                              str_extract(.data$play_text, ".{0,25} kickoff|.{0,25} on-side"), NA_character_),
+      kickoff_player = str_remove(.data$kickoff_player," on-side| kickoff"))
   
-  ## Kickoff Returner
+  ## Kickoff Returner player name
   pbp <- pbp %>% 
     mutate(
       kickoff_returner_player = ifelse(str_detect(.data$play_type,"ickoff"),
-                                       str_extract(.data$play_text,", .{0,25} return"), NA),
+                                       str_extract(.data$play_text,", .{0,25} return|, .{0,25} fumble"), NA_character_),
       kickoff_returner_player = str_remove(.data$kickoff_returner_player,", "),
-      kickoff_returner_player = str_remove(.data$kickoff_returner_player," return")) 
-  ## Field Goal Kicker
+      kickoff_returner_player = str_remove(.data$kickoff_returner_player," return| fumble")) 
+  
+  ## Field Goal Kicker player name
   pbp <- pbp %>% 
     mutate(
       fg_kicker_player = ifelse(str_detect(.data$play_type, "Field Goal"),
-                                str_extract(.data$play_text, regex("(.{0,25} )\\d{0,2} yd field goal| | (.{0,25} )\\d{0,2} yd fg", ignore_case = TRUE)), NA),
-      fg_kicker_player = str_remove(.data$fg_kicker_player, regex(" Yd Field Goal|Yd FG", ignore_case = TRUE)),
-      fg_kicker_player = str_remove(.data$fg_kicker_player," (\\d{1,2})")
-    )
+                                str_extract(.data$play_text, regex("(.{0,25} )\\d{0,2} yd field goal| (.{0,25} )\\d{0,2} yd fg", ignore_case = TRUE)),
+                                NA_character_),
+      fg_kicker_player = str_remove(.data$fg_kicker_player, regex(" Yd Field Goal|Yd FG |yd FG| yd FG", ignore_case = TRUE)),
+      fg_kicker_player = str_remove(.data$fg_kicker_player,"(\\d{1,2})"))
   
+  ## FG Block player name
+  pbp <- pbp %>%
+    mutate(
+      fg_block_player = ifelse(str_detect(.data$play_type, "Field Goal"), 
+                               str_extract(.data$play_text, "blocked by .{0,25}"), NA_character_),
+      fg_block_player = str_remove(.data$fg_block_player, ",(.+)"),
+      fg_block_player = str_remove(.data$fg_block_player, "blocked by "),
+      fg_block_player = str_remove(.data$fg_block_player, "  (.)+")) 
+  
+  ## FG Block Return player name
+  pbp <- pbp %>%
+    mutate(
+      fg_return_player = ifelse(str_detect(.data$play_type, "Field Goal") &
+                                  str_detect(.data$play_text, regex("blocked by|missed", ignore_case = TRUE)) &
+                                  str_detect(.data$play_text, regex("return")), 
+                                str_extract(.data$play_text, "  (.+)"), NA_character_),
+      fg_return_player = str_remove(.data$fg_return_player, ",(.+)"),
+      fg_return_player = str_remove(.data$fg_return_player, "return "),
+      fg_return_player = str_remove(.data$fg_return_player, " for (.+)"),
+      fg_return_player = ifelse(is.na(.data$fg_return_player) & .data$play_type %in% c("Missed Field Goal Return", "Missed Field Goal Return Touchdown"),
+                                str_extract(.data$play_text, "(.+)return"), .data$fg_return_player),
+      fg_return_player = str_remove(.data$fg_return_player, " return"),
+      fg_return_player = str_remove(.data$fg_return_player, "(.+),"))
+  
+  ## Fumble player name
+  pbp <- pbp %>% 
+    mutate(
+      fumble_player = ifelse(str_detect(.data$play_text, "fumble"),
+                             str_extract(.data$play_text, regex("(.{0,25} )fumble", ignore_case = TRUE)), NA_character_),
+      fumble_player = str_remove(.data$fumble_player, regex(" fumble(.+)", ignore_case = TRUE)),
+      fumble_player = str_remove(.data$fumble_player, regex("fumble", ignore_case = TRUE)),
+      fumble_player = str_remove(.data$fumble_player, regex(" yds", ignore_case = TRUE)),
+      fumble_player = str_remove(.data$fumble_player, regex(" yd", ignore_case = TRUE)),
+      fumble_player = str_remove(.data$fumble_player, regex("yardline", ignore_case = TRUE)),
+      fumble_player = str_remove(.data$fumble_player, regex(" yards| yard|for a TD|or a safety", ignore_case = TRUE)),
+      fumble_player = str_remove(.data$fumble_player, regex(" for ", ignore_case = TRUE)),
+      fumble_player = str_remove(.data$fumble_player, regex(" a safety", ignore_case = TRUE)),
+      fumble_player = str_remove(.data$fumble_player, regex("r no gain", ignore_case = TRUE)),
+      fumble_player = str_remove(.data$fumble_player,"(.+)(\\d{1,2})"),
+      fumble_player = str_remove(.data$fumble_player,"(\\d{1,2})"),
+      fumble_player = str_remove(.data$fumble_player,", "),
+      fumble_player = ifelse(.data$play_type == "Penalty", NA_character_, .data$fumble_player))
+  
+  ## Fumble Forced player name
+  pbp <- pbp %>% 
+    mutate(
+      fumble_forced_player = ifelse(str_detect(.data$play_text, "fumble") & 
+                                      str_detect(.data$play_text, regex("forced by", ignore_case = TRUE)),
+                                    str_extract(.data$play_text, regex("forced by(.{0,25})", ignore_case = TRUE)), NA_character_),
+      fumble_forced_player = str_remove(.data$fumble_forced_player, regex("(.+)forced by", ignore_case = TRUE)),
+      fumble_forced_player = str_remove(.data$fumble_forced_player, regex("forced by", ignore_case = TRUE)),
+      fumble_forced_player = str_remove(.data$fumble_forced_player, regex(", recove(.+)", ignore_case = TRUE)),
+      fumble_forced_player = str_remove(.data$fumble_forced_player, regex(", re(.+)", ignore_case = TRUE)),
+      fumble_forced_player = str_remove(.data$fumble_forced_player, regex(", fo(.+)", ignore_case = TRUE)),
+      fumble_forced_player = str_remove(.data$fumble_forced_player, regex(", r", ignore_case = TRUE)),
+      fumble_forced_player = str_remove(.data$fumble_forced_player,","),
+      fumble_forced_player = ifelse(.data$play_type == "Penalty", NA_character_, .data$fumble_forced_player))
+  
+  ## Fumble recovered player
+  pbp <- pbp %>% 
+    mutate(
+      fumble_recovered_player = ifelse(str_detect(.data$play_text, "fumble") & 
+                                         str_detect(.data$play_text, regex("recovered by", ignore_case = TRUE)),
+                                       str_extract(.data$play_text, regex("recovered by(.{0,30})", ignore_case = TRUE)), NA_character_),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex("for a 1ST down", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex("for a 1st down")),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex("(.+)recovered", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex("(.+) by")),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(", recove(.+)", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(", re(.+)", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex("a 1st down", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(" a 1st down", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(", for(.+)", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(", r(.+)", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(" for(.+)", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(" for a")),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(" fo")),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(" , r", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(", r", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex("  (.+)", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex(" ,", ignore_case = TRUE)),
+      fumble_recovered_player = str_remove(.data$fumble_recovered_player, regex("penalty(.+)", ignore_case = TRUE)),
+      fumble_recovered_player = ifelse(.data$play_type == "Penalty", NA_character_, .data$fumble_recovered_player))
   
   pbp <- pbp %>%
-    rename(
-      rusher_player_name = .data$rush_player,
-      receiver_player_name = .data$receiver_player,
-      passer_player_name = .data$pass_player,
-      sack_player_name = .data$sack_player1,
-      sack_player_name2 = .data$sack_player2,
-      interception_player_name = .data$interception_player,
-      punter_player_name = .data$punter_player,
-      fg_kicker_player_name = .data$fg_kicker_player,
-      kickoff_player_name = .data$kickoff_player,
-      kickoff_returner_player_name = .data$kickoff_returner_player,
-      punt_returner_player_name = .data$punt_returner_player)
+    mutate(
+      passer_player_name = str_trim(.data$pass_player),
+      rusher_player_name = str_trim(.data$rush_player),
+      receiver_player_name = str_trim(.data$receiver_player),
+      sack_player_name = str_trim(.data$sack_player1),
+      sack_player_name2 = str_trim(.data$sack_player2),
+      pass_breakup_player_name = str_trim(.data$pass_breakup_player),
+      interception_player_name = str_trim(.data$interception_player),
+      fg_kicker_player_name = str_trim(.data$fg_kicker_player),
+      fg_block_player_name = str_trim(.data$fg_block_player),
+      fg_return_player_name = str_trim(.data$fg_return_player),
+      kickoff_player_name = str_trim(.data$kickoff_player),
+      kickoff_returner_player_name = str_trim(.data$kickoff_returner_player),
+      punter_player_name = str_trim(.data$punter_player),
+      punt_block_player_name = str_trim(.data$punt_block_player),
+      punt_returner_player_name = str_trim(.data$punt_returner_player),
+      punt_block_return_player_name = str_trim(.data$punt_block_return_player),
+      fumble_player_name = str_trim(.data$fumble_player),
+      fumble_forced_player_name = str_trim(.data$fumble_forced_player),
+      fumble_recovered_player_name = str_trim(.data$fumble_recovered_player)) %>% 
+    select(-.data$rush_player, 
+           -.data$receiver_player, 
+           -.data$pass_player, 
+           -.data$sack_player1, 
+           -.data$sack_player2,
+           -.data$pass_breakup_player, 
+           -.data$interception_player, 
+           -.data$punter_player, 
+           -.data$fg_kicker_player, 
+           -.data$fg_block_player,
+           -.data$fg_return_player,
+           -.data$kickoff_player,
+           -.data$kickoff_returner_player, 
+           -.data$punt_returner_player,
+           -.data$punt_block_player,
+           -.data$punt_block_return_player,
+           -.data$fumble_player,
+           -.data$fumble_forced_player,
+           -.data$fumble_recovered_player)
   return(pbp)
   
 }
-
